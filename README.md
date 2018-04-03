@@ -4,6 +4,7 @@ REQUIREMENTS
 --------
 
 * RPi.GPIO
+* samur
 * Python 2.7 to 3.6.
 
 INSTALL

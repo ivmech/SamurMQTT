@@ -15,7 +15,7 @@ setup(
     # Dependent packages (distributions)
     install_requires=[
         "RPi.GPIO",
-        "samur", 
+        "samur",
     ],
 
     scripts=['bin/samur_mqttd.py'],
