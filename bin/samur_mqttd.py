@@ -46,17 +46,31 @@ def main():
         print "Subscribed to MQTT with Topic: %s" % MQTT_TOPIC
 
     def on_message(client, userdata, message):
-        print message.payload
         if message.topic == topic:
-            msg = json.loads(message.payload)
-            if msg["command"] == "switchlight":
+            try:
+                msg = json.loads(message.payload)
+                if msg["command"] == "switchlight":
+                    state = GPIO.LOW
+                    if msg["switchcmd"] == "On": state = GPIO.HIGH
+                    unit = msg["unit"]
+                    if unit < 13:
+                        MB.digitalWrite("K"+str(unit), state)
+                    else:
+                        MB.digitalWrite("V"+str(unit-12), state)
+            except:
+                pass
+
+        # topic:samurid/K1/set payload:ON
+        elif message.topic.startswith(SAMUR_ID):
+            try:
+                relay = message.topic.split("/")[1]
                 state = GPIO.LOW
-                if msg["switchcmd"] == "On": state = GPIO.HIGH
-                unit = msg["unit"]
-                if unit < 13:
-                    MB.digitalWrite("K"+str(unit), state)
-                else:
-                    MB.digitalWrite("V"+str(unit-12), state)
+                if message.payload == "ON": state = GPIO.HIGH
+                MB.digitalWrite(relay, state)
+            except:
+                return
+
+        print message.topic, message.payload
 
     thread = threading.Thread(target=worker)
     thread.start()
@@ -72,7 +86,7 @@ def main():
 
 def worker():
     MQTT_TOPIC = "domoticz/in"
-    
+
     def on_connect(mosq, obj, rc):
 	    print "Connected to MQTT Broker"
 
@@ -92,9 +106,15 @@ def worker():
             state = "Off"
             if l != prev_line[i]:
                 if not l: state = "On"
-                MQTT_MSG = '{"command": "switchlight", "idx": %d, "switchcmd": "%s" }' % (i+16, state)
+                contact = "L%d" % (i+1)
+                if i > 7:
+                    contact = "D%d" % (i-7)
+                topic = "%s/%s/contact" % (SAMUR_ID, contact)
+#                MQTT_MSG = '{"command": "switchlight", "idx": %d, "switchcmd": "%s" }' % (i+16, state)
+
                 client.connect(MQTT_BROKER, MQTT_PORT, MQTT_KEEPALIVE_INTERVAL) 
-                client.publish(MQTT_TOPIC, MQTT_MSG)
+                client.publish(topic, state.upper())
+#                client.publish(MQTT_TOPIC, MQTT_MSG)
                 client.disconnect()
         prev_line = line
         sleep(1)
