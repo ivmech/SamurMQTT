@@ -109,13 +109,23 @@ def worker():
                 contact = "L%d" % (i+1)
                 if i > 7:
                     contact = "D%d" % (i-7)
+
+                # Topic for General MQTT
                 topic = "%s/%s/contact" % (SAMUR_ID, contact)
-#                MQTT_MSG = '{"command": "switchlight", "idx": %d, "switchcmd": "%s" }' % (i+16, state)
+
+                # Message for Domoticz
+                MQTT_MSG = '{"command": "switchlight", "idx": %d, "switchcmd": "%s" }' % (i+16, state)
 
                 client.connect(MQTT_BROKER, MQTT_PORT, MQTT_KEEPALIVE_INTERVAL) 
+
+                # Publishing for General MQTT
                 client.publish(topic, state.upper())
-#                client.publish(MQTT_TOPIC, MQTT_MSG)
+
+                # Publishing for Domoticz
+                client.publish(MQTT_TOPIC, MQTT_MSG)
+
                 client.disconnect()
+
         prev_line = line
         sleep(1)
 
