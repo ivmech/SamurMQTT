@@ -118,11 +118,12 @@ def worker():
 
                 client.connect(MQTT_BROKER, MQTT_PORT, MQTT_KEEPALIVE_INTERVAL) 
 
+                # Publishing for Domoticz
+                client.publish(MQTT_TOPIC, MQTT_MSG)
+
                 # Publishing for General MQTT
                 client.publish(topic, state.upper())
 
-                # Publishing for Domoticz
-                client.publish(MQTT_TOPIC, MQTT_MSG)
 
                 client.disconnect()
 
