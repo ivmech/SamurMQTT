@@ -37,6 +37,8 @@ except:
     MQTT_KEEPALIVE_INTERVAL = 45
 
 def main():
+    init()
+
     MQTT_TOPIC = "%s/#" % SAMUR_ID
     topic = "%s/in" % SAMUR_ID
     def on_connect(client, userdata, flags, rc):
@@ -87,13 +89,6 @@ def main():
 def worker():
     MQTT_TOPIC = "domoticz/in"
 
-    def on_connect(mosq, obj, rc):
-	    print "Connected to MQTT Broker"
-
-    # Define on_publish event Handler
-    def on_publish(client, userdata, mid):
-	    print "Message Published..."
-
     client = mqtt.Client()
     client.on_publish = on_publish
     client.on_connect = on_connect
@@ -129,6 +124,32 @@ def worker():
 
         prev_line = line
         sleep(1)
+
+def init():
+    MQTT_TOPIC = "domoticz/in"
+    client = mqtt.Client()
+    client.on_publish = on_publish
+    client.on_connect = on_connect
+    client.username_pw_set(MQTT_USER, MQTT_PASS)
+
+    for i in range(15):
+        MB.relays.outputAll([0] * 16)
+        state = "Off"
+        contact = "K%d" % (i+1)
+        topic = "%s/%s/contact" % (SAMUR_ID, contact)
+        MQTT_MSG = '{"command": "switchlight", "idx": %d, "switchcmd": "%s" }' % (i+1, state)
+        client.connect(MQTT_BROKER, MQTT_PORT, MQTT_KEEPALIVE_INTERVAL) 
+        client.publish(MQTT_TOPIC, MQTT_MSG)
+        client.publish(topic, state.upper())
+        client.disconnect()
+    sleep(3)
+
+def on_connect(mosq, obj, rc):
+    print "Connected to MQTT Broker"
+
+def on_publish(client, userdata, mid):
+    pass
+#    print "Message Published..."
 
 if __name__ == "__main__":
     try:
